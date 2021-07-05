@@ -1,7 +1,7 @@
 use monzo::{Client, Result};
 
-use monzo_cli::*;
 use cli::SubCommands;
+use monzo_cli::*;
 
 mod cli;
 
@@ -19,12 +19,13 @@ async fn main() -> Result<()> {
         Some(SubCommands::Pot) => {
             let pots = client.pots(account_id).await?;
             print_pots(pots);
-        },
+        }
+        Some(SubCommands::Info) => print_account_info(accounts),
         None => {
             let balance = client.balance(account_id).await?;
             let pots = client.pots(account_id).await?;
             print_summary(balance, pots);
-        },
+        }
     }
 
     Ok(())
