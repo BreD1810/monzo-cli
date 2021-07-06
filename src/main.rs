@@ -1,3 +1,4 @@
+use chrono::{Duration, Utc};
 use monzo::{Client, Result};
 
 use cli::SubCommands;
@@ -21,6 +22,15 @@ async fn main() -> Result<()> {
             print_pots(pots);
         }
         Some(SubCommands::Info) => print_account_info(accounts),
+        Some(SubCommands::Transactions) => {
+            let transactions = client
+                .transactions(account_id)
+                .since(Utc::now() - Duration::days(7))
+                .send()
+                .await?;
+
+            print_transactions(transactions);
+        }
         None => {
             let balance = client.balance(account_id).await?;
             let pots = client.pots(account_id).await?;

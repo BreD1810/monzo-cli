@@ -1,9 +1,18 @@
+use monzo::transactions::Transaction;
 use monzo::{Account, Balance, Pot};
 use rusty_money::{iso, Money};
 use std::env::var;
+use std::env::VarError;
 
 pub fn get_access_token() -> String {
-    var("MONZO_ACCESS_TOKEN").unwrap_or_default()
+    match var("MONZO_ACCESS_TOKEN") {
+        Ok(t) => t,
+        Err(e) if e == VarError::NotPresent => {
+            eprintln!("Error: `MONZO_ACCESS_TOKEN` environment variable is not set.");
+            std::process::exit(1);
+        }
+        Err(e) => std::panic::panic_any(e),
+    }
 }
 
 pub fn print_account_info(accounts: Vec<Account>) {
@@ -26,6 +35,20 @@ pub fn print_pots(pots: Vec<Pot>) {
         let pot_currency = iso::find(p.currency()).unwrap();
         let pot_bal = Money::from_minor(p.balance(), pot_currency);
         println!("{}:\t{}", p.name(), pot_bal);
+    });
+}
+
+pub fn print_transactions(transactions: Vec<Transaction>) {
+    transactions.iter().for_each(|t| {
+        let transaction_currency = iso::find(t.currency()).unwrap();
+        println!("Description:\t{}", t.description());
+        println!("Date:\t{}", t.created().to_string());
+        println!(
+            "Amount:\t{}",
+            Money::from_minor(t.amount(), transaction_currency)
+        );
+        println!("Notes:\t{}", t.notes());
+        println!();
     });
 }
 
