@@ -451,6 +451,7 @@ dependencies = [
 name = "monzo-cli"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "clap",
  "monzo-lib",
  "rusty-money",
@@ -460,8 +461,6 @@ dependencies = [
 [[package]]
 name = "monzo-lib"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95d2d6afeabc3f549d73af15f8bae4d375bcfc24a2f66d8aad97ddb0744fded3"
 dependencies = [
  "chrono",
  "futures-util",

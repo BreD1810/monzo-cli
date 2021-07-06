@@ -1,0 +1,3 @@
+[submodule "patch/monzo-lib"]
+	path = patch/monzo-lib
+	url = https://github.com/BreD1810/monzo-lib.git
