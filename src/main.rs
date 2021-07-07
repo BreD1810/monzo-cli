@@ -10,11 +10,11 @@ mod cli;
 async fn main() -> Result<()> {
     let cli_parameters = cli::parse();
     let access_token = get_access_token();
-    let client = Client::quick(access_token);
+    let client = Client::new(access_token);
 
     let accounts = client.accounts().await?;
 
-    let account_id = accounts[0].id();
+    let account_id = &accounts[0].id;
 
     match cli_parameters.subcommand {
         Some(SubCommands::Pot) => {
