@@ -51,10 +51,6 @@ pub async fn get_transactions(
 ) -> Result<Vec<Transaction>> {
     let since = match cli_parameters.options {
         Some(CommandOptions::Since(s)) => s,
-        Some(CommandOptions::List) => {
-            eprintln!("List option not applicable to transaction.");
-            std::process::exit(1);
-        }
         None => {
             eprintln!("Error reading 'since' flag.");
             std::process::exit(1);
