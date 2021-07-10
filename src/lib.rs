@@ -1,8 +1,14 @@
+use chrono::{Duration, Utc};
+use monzo::inner_client::Quick;
 use monzo::transactions::Transaction;
-use monzo::{Account, Balance, Pot};
+use monzo::{Account, Balance, Client, Pot, Result};
 use rusty_money::{iso, Money};
 use std::env::var;
 use std::env::VarError;
+
+pub mod cli;
+
+use cli::{CommandOptions, Parameters};
 
 pub fn get_access_token() -> String {
     match var("MONZO_ACCESS_TOKEN") {
@@ -38,8 +44,33 @@ pub fn print_pots(pots: Vec<Pot>) {
     });
 }
 
+pub async fn get_transactions(
+    client: Client<Quick>,
+    account_id: &str,
+    cli_parameters: Parameters,
+) -> Result<Vec<Transaction>> {
+    let since = match cli_parameters.options {
+        Some(CommandOptions::Since(s)) => s,
+        Some(CommandOptions::List) => {
+            eprintln!("List option not applicable to transaction.");
+            std::process::exit(1);
+        }
+        None => {
+            eprintln!("Error reading 'since' flag.");
+            std::process::exit(1);
+        }
+    };
+    let transactions = client
+        .transactions(account_id)
+        .since(Utc::now() - Duration::days(since))
+        .send()
+        .await;
+
+    transactions
+}
+
 pub fn print_transactions(transactions: Vec<Transaction>) {
-    transactions.iter().for_each(|t| {
+    transactions.iter().rev().for_each(|t| {
         let transaction_currency = iso::find(&t.currency).unwrap();
         println!("Description:\t{}", t.description);
         println!("Category:\t{}", t.category);

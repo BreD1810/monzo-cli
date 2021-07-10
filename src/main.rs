@@ -1,10 +1,6 @@
-use chrono::{Duration, Utc};
 use monzo::{Client, Result};
 
-use cli::SubCommands;
 use monzo_cli::*;
-
-mod cli;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -17,18 +13,13 @@ async fn main() -> Result<()> {
     let account_id = &accounts[0].id;
 
     match cli_parameters.subcommand {
-        Some(SubCommands::Pot) => {
+        Some(cli::SubCommands::Pot) => {
             let pots = client.pots(account_id).await?;
             print_pots(pots);
         }
-        Some(SubCommands::Info) => print_account_info(accounts),
-        Some(SubCommands::Transactions) => {
-            let transactions = client
-                .transactions(account_id)
-                .since(Utc::now() - Duration::days(7))
-                .send()
-                .await?;
-
+        Some(cli::SubCommands::Info) => print_account_info(accounts),
+        Some(cli::SubCommands::Transactions) => {
+            let transactions = get_transactions(client, account_id, cli_parameters).await?;
             print_transactions(transactions);
         }
         None => {

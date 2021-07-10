@@ -1,4 +1,4 @@
-use clap::{App, AppSettings, Arg, SubCommand};
+use clap::{value_t, App, AppSettings, Arg, SubCommand};
 
 pub struct Parameters {
     pub subcommand: Option<SubCommands>,
@@ -13,6 +13,7 @@ pub enum SubCommands {
 
 pub enum CommandOptions {
     List,
+    Since(i64),
 }
 
 pub fn parse() -> Parameters {
@@ -31,7 +32,14 @@ pub fn parse() -> Parameters {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("transactions").about("View transactions from the last 7 days"),
+            SubCommand::with_name("transactions")
+                .about("View transactions from the last 7 days")
+                .arg(
+                    Arg::with_name("transaction-since")
+                        .long("since")
+                        .help("Number or days ago to list transactions from")
+                        .default_value("7"),
+                ),
         )
         .get_matches();
 
@@ -53,10 +61,13 @@ pub fn parse() -> Parameters {
                 }
             }
         }
-        Some("transactions") => Parameters {
-            subcommand: Some(SubCommands::Transactions),
-            options: None,
-        },
+        Some("transactions") => {
+            let days = value_t!(matches.value_of("transaction-since"), i64).unwrap_or(7);
+            Parameters {
+                subcommand: Some(SubCommands::Transactions),
+                options: Some(CommandOptions::Since(days)),
+            }
+        }
         Some(_) => panic!("Unrecognised subcommand"),
         None => Parameters {
             subcommand: None,
