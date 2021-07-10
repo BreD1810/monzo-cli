@@ -42,6 +42,7 @@ pub fn print_transactions(transactions: Vec<Transaction>) {
     transactions.iter().for_each(|t| {
         let transaction_currency = iso::find(&t.currency).unwrap();
         println!("Description:\t{}", t.description);
+        println!("Category:\t{}", t.category);
         println!("Date:\t{}", t.created.to_string());
         println!(
             "Amount:\t{}",
