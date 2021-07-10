@@ -8,7 +8,7 @@ use std::env::VarError;
 
 pub mod cli;
 
-use cli::{CommandOptions, Parameters};
+use cli::Parameters;
 
 pub fn get_access_token() -> String {
     match var("MONZO_ACCESS_TOKEN") {
@@ -49,20 +49,34 @@ pub async fn get_transactions(
     account_id: &str,
     cli_parameters: Parameters,
 ) -> Result<Vec<Transaction>> {
-    let since = match cli_parameters.options {
-        Some(CommandOptions::Since(s)) => s,
-        None => {
-            eprintln!("Error reading 'since' flag.");
-            std::process::exit(1);
-        }
-    };
-    let transactions = client
-        .transactions(account_id)
-        .since(Utc::now() - Duration::days(since))
-        .send()
-        .await;
+    let cli_options = cli_parameters.options.unwrap();
+    let since = cli_options.since;
 
-    transactions
+    let transactions = client.transactions(account_id);
+
+    let since_date = match since {
+        0 => Utc::now(),
+        d => Utc::now() - Duration::days(d as i64),
+    };
+    let transactions = transactions.since(since_date);
+
+    let transactions = match cli_options.before {
+        Some(b) => {
+            let before_date = Utc::now() - Duration::days(b as i64);
+
+            if before_date < since_date {
+                eprintln!("Before date cannot be before since date");
+                std::process::exit(1);
+            }
+
+            transactions.before(before_date)
+        }
+        None => transactions,
+    };
+
+    let result = transactions.send().await;
+
+    result
 }
 
 pub fn print_transactions(transactions: Vec<Transaction>) {

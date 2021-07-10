@@ -11,8 +11,9 @@ pub enum SubCommands {
     Transactions,
 }
 
-pub enum CommandOptions {
-    Since(i64),
+pub struct CommandOptions {
+    pub since: usize,
+    pub before: Option<usize>,
 }
 
 pub fn parse() -> Parameters {
@@ -27,8 +28,14 @@ pub fn parse() -> Parameters {
                 .arg(
                     Arg::with_name("transaction-since")
                         .long("since")
-                        .help("Number or days ago to list transactions from")
+                        .help("Number of days ago to list transactions from")
                         .default_value("7"),
+                )
+                .arg(
+                    Arg::with_name("transaction-before")
+                        .long("before")
+                        .help("Number of days ago to list transactions before")
+                        .default_value("0"),
                 ),
         )
         .get_matches();
@@ -43,10 +50,18 @@ pub fn parse() -> Parameters {
             options: None,
         },
         Some("transactions") => {
-            let days = value_t!(matches.value_of("transaction-since"), i64).unwrap_or(7);
+            let submatch = matches.subcommand_matches("transactions").unwrap();
+            let days = value_t!(submatch.value_of("transaction-since"), usize).unwrap();
+            let before = match value_t!(submatch.value_of("transaction-before"), usize) {
+                Ok(b) => Some(b),
+                Err(_) => None,
+            };
             Parameters {
                 subcommand: Some(SubCommands::Transactions),
-                options: Some(CommandOptions::Since(days)),
+                options: Some(CommandOptions {
+                    since: days,
+                    before,
+                }),
             }
         }
         Some(_) => panic!("Unrecognised subcommand"),
