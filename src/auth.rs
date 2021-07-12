@@ -75,17 +75,24 @@ pub async fn get_authed_client() -> Client<Refreshable> {
         cfg.refresh_token.clone(),
     );
 
-    let auth_check = client.who_am_i().await;
+    let auth_check = client.accounts().await;
     match auth_check {
         Ok(_) => {}
         Err(monzo::Error::AuthExpired) => {
             refresh_client(&mut client, &mut cfg).await;
         }
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            eprintln!("Please run `monzo auth`");
-            std::process::exit(1);
-        }
+        Err(e) => match e {
+            monzo::Error::Client(code) if code == 403 => {
+                eprintln!("Error: {}", e);
+                eprintln!("It is likely that you need to allow access in your Monzo app");
+                std::process::exit(1);
+            }
+            _ => {
+                eprintln!("Error: {}", e);
+                eprintln!("Please run `monzo auth`");
+                std::process::exit(1);
+            }
+        },
     };
 
     client
