@@ -15,7 +15,11 @@ monzo-lib = "0.3"
 tokio = { version = "1", features = ["full"] }
 rusty-money = "0.4.1"
 clap = "2.33"
+url = "2.2"
 chrono = "0.4"
+confy = "0.4"
+oauth2 = "4.1"
+serde = { version = "1", features = ["derive"] }
 
 [patch.crates-io]
 monzo-lib = { path = 'patch/monzo-lib' }

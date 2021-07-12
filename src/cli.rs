@@ -6,8 +6,9 @@ pub struct Parameters {
 }
 
 pub enum SubCommands {
+    Auth,
     Info,
-    Pot,
+    Pots,
     Transactions,
 }
 
@@ -20,6 +21,7 @@ pub fn parse() -> Parameters {
     let matches = App::new("monzo")
         .setting(AppSettings::ColoredHelp)
         .setting(AppSettings::DisableVersion)
+        .subcommand(SubCommand::with_name("auth").about("Authenticate your Monzo account"))
         .subcommand(SubCommand::with_name("info").about("Information about your account"))
         .subcommand(SubCommand::with_name("pots").about("List your Monzo pots"))
         .subcommand(
@@ -41,12 +43,16 @@ pub fn parse() -> Parameters {
         .get_matches();
 
     match matches.subcommand_name() {
+        Some("auth") => Parameters {
+            subcommand: Some(SubCommands::Auth),
+            options: None,
+        },
         Some("info") => Parameters {
             subcommand: Some(SubCommands::Info),
             options: None,
         },
         Some("pots") => Parameters {
-            subcommand: None,
+            subcommand: Some(SubCommands::Pots),
             options: None,
         },
         Some("transactions") => {

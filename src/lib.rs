@@ -1,25 +1,13 @@
 use chrono::{Duration, Utc};
-use monzo::inner_client::Quick;
+use monzo::inner_client::Refreshable;
 use monzo::transactions::Transaction;
 use monzo::{Account, Balance, Client, Pot, Result};
 use rusty_money::{iso, Money};
-use std::env::var;
-use std::env::VarError;
 
+pub mod auth;
 pub mod cli;
 
 use cli::Parameters;
-
-pub fn get_access_token() -> String {
-    match var("MONZO_ACCESS_TOKEN") {
-        Ok(t) => t,
-        Err(e) if e == VarError::NotPresent => {
-            eprintln!("Error: `MONZO_ACCESS_TOKEN` environment variable is not set.");
-            std::process::exit(1);
-        }
-        Err(e) => std::panic::panic_any(e),
-    }
-}
 
 pub fn print_account_info(accounts: Vec<Account>) {
     accounts.iter().for_each(|a| {
@@ -45,7 +33,7 @@ pub fn print_pots(pots: Vec<Pot>) {
 }
 
 pub async fn get_transactions(
-    client: Client<Quick>,
+    client: Client<Refreshable>,
     account_id: &str,
     cli_parameters: Parameters,
 ) -> Result<Vec<Transaction>> {
