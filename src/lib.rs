@@ -86,10 +86,12 @@ pub fn print_summary(balance: Balance, pots: Vec<Pot>) {
     let currency = iso::find(&balance.currency).unwrap();
     let formatted_balance = Money::from_minor(balance.balance, currency);
     let total_balance = Money::from_minor(balance.total_balance, currency);
+    let spend_today = Money::from_minor(balance.spend_today, currency);
 
     let open_pots = pots.iter().filter(|p| !p.deleted);
 
     println!("Current account balance:\t{}", formatted_balance);
     println!("Total balance:\t\t\t{}", total_balance);
+    println!("Spend today:\t\t\t{}", spend_today);
     println!("Number of Pots:\t\t\t{}", open_pots.count());
 }
