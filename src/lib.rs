@@ -10,25 +10,38 @@ pub mod cli;
 use cli::Parameters;
 
 pub fn print_account_info(accounts: Vec<Account>) {
+    if accounts.is_empty() {
+        eprintln!("There are no accounts");
+        std::process::exit(1);
+    }
+
+    println!("{:<15}|{:<10}", "Account Number", "Sort Code");
+
     accounts.iter().for_each(|a| {
         let account_no = &a.account_number;
         let sort_code = &a.sort_code;
-
-        println!("Account Number:\t{}", account_no);
-        println!(
-            "Sort code:\t{}-{}-{}",
+        let formatted_sort_code = format!(
+            "{}-{}-{}",
             &sort_code[0..2],
             &sort_code[2..4],
             &sort_code[4..]
         );
+        println!("{:<15}|{:<10}", account_no, formatted_sort_code);
     })
 }
 
 pub fn print_pots(pots: Vec<Pot>) {
+    if pots.is_empty() {
+        eprintln!("No pots available");
+        std::process::exit(1);
+    }
+
+    println!("{:<10}|{:<10}", "Name", "Balance");
+
     pots.iter().filter(|p| !p.deleted).for_each(|p| {
         let pot_currency = iso::find(&p.currency).unwrap();
         let pot_bal = Money::from_minor(p.balance, pot_currency);
-        println!("{}:\t{}", p.name, pot_bal);
+        println!("{:<10}|{:<10}", p.name, pot_bal);
     });
 }
 
@@ -68,17 +81,26 @@ pub async fn get_transactions(
 }
 
 pub fn print_transactions(transactions: Vec<Transaction>) {
+    if transactions.is_empty() {
+        eprintln!("No transactions available");
+        std::process::exit(1);
+    }
+
+    println!(
+        "{:<42}|{:<10}|{:<29}|{:<10}|{:<15}",
+        "Description", "Category", "Date", "Amount", "Notes"
+    );
+
     transactions.iter().rev().for_each(|t| {
         let transaction_currency = iso::find(&t.currency).unwrap();
-        println!("Description:\t{}", t.description);
-        println!("Category:\t{}", t.category);
-        println!("Date:\t{}", t.created.to_string());
         println!(
-            "Amount:\t{}",
-            Money::from_minor(t.amount, transaction_currency)
+            "{:<42}|{:<10}|{:<29}|{:<10}|{:<15}",
+            t.description,
+            t.category,
+            t.created.to_string(),
+            Money::from_minor(t.amount, transaction_currency).to_string(),
+            t.notes
         );
-        println!("Notes:\t{}", t.notes);
-        println!();
     });
 }
 
@@ -90,8 +112,11 @@ pub fn print_summary(balance: Balance, pots: Vec<Pot>) {
 
     let open_pots = pots.iter().filter(|p| !p.deleted);
 
-    println!("Current account balance:\t{}", formatted_balance);
-    println!("Total balance:\t\t\t{}", total_balance);
-    println!("Spend today:\t\t\t{}", spend_today);
-    println!("Number of Pots:\t\t\t{}", open_pots.count());
+    println!(
+        "{:<25}{:<10}",
+        "Current account balance:", formatted_balance
+    );
+    println!("{:<25}{:<10}", "Total balance:", total_balance);
+    println!("{:<25}{:<10}", "Spend today:", spend_today);
+    println!("{:<25}{:<10}", "Number of Pots:", open_pots.count());
 }
