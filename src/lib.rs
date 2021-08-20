@@ -99,7 +99,9 @@ fn print_transactions_without_declined(transactions: Vec<Transaction>, pots: Vec
     );
 
     transactions.iter().rev().for_each(|t| {
-        if t.decline_reason.is_some() { return }
+        if t.decline_reason.is_some() {
+            return;
+        }
 
         let transaction_currency = iso::find(&t.currency).unwrap();
         let description = get_transaction_description(t.description.clone(), &pots);

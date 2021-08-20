@@ -44,7 +44,7 @@ pub fn parse() -> Parameters {
                     Arg::with_name("include-declined")
                         .long("include-declined")
                         .help("Include declined transactions")
-                        .takes_value(false)
+                        .takes_value(false),
                 ),
         )
         .get_matches();
