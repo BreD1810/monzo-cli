@@ -7,7 +7,7 @@ use rusty_money::{iso, Money};
 pub mod auth;
 pub mod cli;
 
-use cli::Parameters;
+use cli::CommandOptions;
 
 pub fn print_account_info(accounts: Vec<Account>) {
     if accounts.is_empty() {
@@ -48,9 +48,8 @@ pub fn print_pots(pots: Vec<Pot>) {
 pub async fn get_transactions(
     client: Client<Refreshable>,
     account_id: &str,
-    cli_parameters: Parameters,
+    cli_options: &CommandOptions,
 ) -> Result<Vec<Transaction>> {
-    let cli_options = cli_parameters.options.unwrap();
     let since = cli_options.since;
 
     let transactions = client.transactions(account_id);
@@ -80,26 +79,62 @@ pub async fn get_transactions(
     result
 }
 
-pub fn print_transactions(transactions: Vec<Transaction>) {
+pub fn print_transactions(transactions: Vec<Transaction>, include_declined: bool) {
     if transactions.is_empty() {
         eprintln!("No transactions available");
         std::process::exit(1);
     }
 
+    if include_declined {
+        print_transactions_with_declined(transactions);
+    } else {
+        print_transactions_without_declined(transactions);
+    }
+}
+
+fn print_transactions_without_declined(transactions: Vec<Transaction>) {
     println!(
-        "{:<42}|{:<10}|{:<29}|{:<10}|{:<15}",
+        "{:<42}|{:<15}|{:<29}|{:<10}|{:<15}",
         "Description", "Category", "Date", "Amount", "Notes"
     );
 
     transactions.iter().rev().for_each(|t| {
+        match t.decline_reason {
+            Some(_) => return,
+            None => {},
+        }
         let transaction_currency = iso::find(&t.currency).unwrap();
         println!(
-            "{:<42}|{:<10}|{:<29}|{:<10}|{:<15}",
+            "{:<42}|{:<15}|{:<29}|{:<10}|{:<15}",
             t.description,
             t.category,
             t.created.to_string(),
             Money::from_minor(t.amount, transaction_currency).to_string(),
-            t.notes
+            t.notes.replace("\n", " ")
+        );
+    });
+}
+
+fn print_transactions_with_declined(transactions: Vec<Transaction>) {
+    println!(
+        "{:<42}|{:<15}|{:<29}|{:<10}|{:<10}|{:<15}",
+        "Description", "Category", "Date", "Amount", "Declined?", "Notes"
+    );
+
+    transactions.iter().rev().for_each(|t| {
+        let declined = match t.decline_reason {
+            Some(_) => true,
+            None => false,
+        };
+        let transaction_currency = iso::find(&t.currency).unwrap();
+        println!(
+            "{:<42}|{:<15}|{:<29}|{:<10}|{:<10}|{:<15}",
+            t.description,
+            t.category,
+            t.created.to_string(),
+            Money::from_minor(t.amount, transaction_currency).to_string(),
+            declined,
+            t.notes.replace("\n", " ")
         );
     });
 }

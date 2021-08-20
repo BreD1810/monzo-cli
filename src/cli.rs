@@ -15,6 +15,7 @@ pub enum SubCommands {
 pub struct CommandOptions {
     pub since: usize,
     pub before: Option<usize>,
+    pub include_declined: bool,
 }
 
 pub fn parse() -> Parameters {
@@ -38,6 +39,12 @@ pub fn parse() -> Parameters {
                         .long("before")
                         .help("Number of days ago to list transactions before")
                         .default_value("0"),
+                )
+                .arg(
+                    Arg::with_name("include-declined")
+                        .long("include-declined")
+                        .help("Include declined transactions")
+                        .takes_value(false)
                 ),
         )
         .get_matches();
@@ -62,11 +69,13 @@ pub fn parse() -> Parameters {
                 Ok(b) => Some(b),
                 Err(_) => None,
             };
+            let include_declined = submatch.is_present("include-declined");
             Parameters {
                 subcommand: Some(SubCommands::Transactions),
                 options: Some(CommandOptions {
                     since: days,
                     before,
+                    include_declined,
                 }),
             }
         }
