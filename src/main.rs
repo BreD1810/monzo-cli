@@ -27,8 +27,9 @@ async fn main() -> Result<()> {
             let accounts = client.accounts().await?;
             let account_id = &accounts[0].id;
             let cli_options = cli_parameters.options.unwrap();
-            let transactions = get_transactions(client, account_id, &cli_options).await?;
-            print_transactions(transactions, cli_options.include_declined);
+            let transactions = get_transactions(&client, account_id, &cli_options).await?;
+            let pots = client.pots(account_id).await?;
+            print_transactions(transactions, pots, cli_options.include_declined);
         }
         None => {
             let client = auth::get_authed_client().await;

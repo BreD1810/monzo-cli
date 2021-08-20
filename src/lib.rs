@@ -46,7 +46,7 @@ pub fn print_pots(pots: Vec<Pot>) {
 }
 
 pub async fn get_transactions(
-    client: Client<Refreshable>,
+    client: &Client<Refreshable>,
     account_id: &str,
     cli_options: &CommandOptions,
 ) -> Result<Vec<Transaction>> {
@@ -79,34 +79,33 @@ pub async fn get_transactions(
     result
 }
 
-pub fn print_transactions(transactions: Vec<Transaction>, include_declined: bool) {
+pub fn print_transactions(transactions: Vec<Transaction>, pots: Vec<Pot>, include_declined: bool) {
     if transactions.is_empty() {
         eprintln!("No transactions available");
         std::process::exit(1);
     }
 
     if include_declined {
-        print_transactions_with_declined(transactions);
+        print_transactions_with_declined(transactions, pots);
     } else {
-        print_transactions_without_declined(transactions);
+        print_transactions_without_declined(transactions, pots);
     }
 }
 
-fn print_transactions_without_declined(transactions: Vec<Transaction>) {
+fn print_transactions_without_declined(transactions: Vec<Transaction>, pots: Vec<Pot>) {
     println!(
         "{:<42}|{:<15}|{:<29}|{:<10}|{:<15}",
         "Description", "Category", "Date", "Amount", "Notes"
     );
 
     transactions.iter().rev().for_each(|t| {
-        match t.decline_reason {
-            Some(_) => return,
-            None => {},
-        }
+        if t.decline_reason.is_some() { return }
+
         let transaction_currency = iso::find(&t.currency).unwrap();
+        let description = get_transaction_description(t.description.clone(), &pots);
         println!(
             "{:<42}|{:<15}|{:<29}|{:<10}|{:<15}",
-            t.description,
+            description,
             t.category,
             t.created.to_string(),
             Money::from_minor(t.amount, transaction_currency).to_string(),
@@ -115,21 +114,19 @@ fn print_transactions_without_declined(transactions: Vec<Transaction>) {
     });
 }
 
-fn print_transactions_with_declined(transactions: Vec<Transaction>) {
+fn print_transactions_with_declined(transactions: Vec<Transaction>, pots: Vec<Pot>) {
     println!(
         "{:<42}|{:<15}|{:<29}|{:<10}|{:<10}|{:<15}",
         "Description", "Category", "Date", "Amount", "Declined?", "Notes"
     );
 
     transactions.iter().rev().for_each(|t| {
-        let declined = match t.decline_reason {
-            Some(_) => true,
-            None => false,
-        };
+        let declined = t.decline_reason.is_some();
         let transaction_currency = iso::find(&t.currency).unwrap();
+        let description = get_transaction_description(t.description.clone(), &pots);
         println!(
             "{:<42}|{:<15}|{:<29}|{:<10}|{:<10}|{:<15}",
-            t.description,
+            description,
             t.category,
             t.created.to_string(),
             Money::from_minor(t.amount, transaction_currency).to_string(),
@@ -137,6 +134,16 @@ fn print_transactions_with_declined(transactions: Vec<Transaction>) {
             t.notes.replace("\n", " ")
         );
     });
+}
+
+fn get_transaction_description(description: String, pots: &[Pot]) -> String {
+    let matching_pots: Vec<&Pot> = pots.iter().filter(|p| p.id == description).collect();
+
+    if matching_pots.len() == 1 {
+        format!("POT - {}", matching_pots.first().unwrap().name)
+    } else {
+        description
+    }
 }
 
 pub fn print_summary(balance: Balance, pots: Vec<Pot>) {
